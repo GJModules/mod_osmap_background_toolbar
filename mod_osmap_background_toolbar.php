@@ -10,6 +10,9 @@
 
 use Joomla\CMS\Helper\ModuleHelper;
 
+die(__FILE__ .' '. __LINE__ );
+
+
 defined('_JEXEC') or die;
 
 // The below line is no longer used in Joomla 4
