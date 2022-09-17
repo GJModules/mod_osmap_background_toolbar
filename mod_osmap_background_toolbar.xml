@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" version="3.8" client="site" method="upgrade">
+	<name>MOD_OSMAP_BACKGROUND_TOOLBAR</name>
+	<creationDate>17.09.22</creationDate>
+	<author>Gartes</author>
+	<authorEmail>your@email.com</authorEmail>
+	<authorUrl>http://your.url.com</authorUrl>
+	<copyright>A copyright</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<version>1.0</version>
+	<description>MOD_OSMAP_BACKGROUND_TOOLBAR_XML_DESCRIPTION</description>
+
+	<files>
+		<filename module="mod_osmap_background_toolbar">mod_osmap_background_toolbar.php</filename>
+		<folder>tmpl</folder>
+		<folder>language</folder>
+		<filename>mod_osmap_background_toolbar.xml</filename>
+	</files>
+
+	<!-- Update servers -->
+	<updateservers>
+		<server type="extension" priority="1" name="mod_osmap_background_toolbar">https://raw.githubusercontent.com/GJModules/mod_osmap_background_toolbar/main/update.xml</server>
+	</updateservers>
+
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+					name="domain"
+					type="url"
+					label="MOD_OSMAP_BACKGROUND_TOOLBAR_URL_LABEL"
+					description="MOD_OSMAP_BACKGROUND_TOOLBAR_URL_DESCRIPTION"
+					hint="https://www.example.com"
+					filter="url"
+					validate="url"
+				/>
+			</fieldset>
+			<fieldset
+					name="advanced">
+				<field
+						name="moduleclass_sfx"
+						type="text"
+						label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL"
+						description="COM_MODULES_FIELD_MODULECLASS_SFX_DESC" />
+			</fieldset>
+		</fields>
+	</config>
+</extension>

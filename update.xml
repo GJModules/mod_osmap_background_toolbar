@@ -2,8 +2,6 @@
     <update>
         <name>MOD_OSMAP_BACKGROUND_TOOLBAR</name>
         <description><![CDATA[Модуль для com_osmap - создает кнопку в футоре панели администратора для управления фоновым созданием карты сайта ]]></description>
-
-
         <type>module</type>
         <element>mod_osmap_background_toolbar</element>
         <version>1.1</version>
