@@ -4,7 +4,7 @@
         <description><![CDATA[Модуль для com_osmap - создает кнопку в футоре панели администратора для управления фоновым созданием карты сайта ]]></description>
         <type>module</type>
         <element>mod_osmap_background_toolbar</element>
-        <version>1.1</version>
+        <version>1.2</version>
         <client>administrator</client>
         <infourl title="Joomla!">https://www.joomla.org/announcements/release-news/5765-joomla-3-9-6-release.html</infourl>
         <downloads>

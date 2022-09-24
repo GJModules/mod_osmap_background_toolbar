@@ -13,7 +13,12 @@ defined('_JEXEC') or die;
 // Access to module parameters
 $domain = $params->get('domain', 'https://www.joomla.org');
 ?>
+<div class="btn-group">
+    <span class="btn-group separator"></span>
+<!--    href="https://www.new.marketprofil.ru/" -->
+    <a  data-evt="map-go">
+        <span class="icon-database" aria-hidden="true"></span>
+        Map-Go
+    </a>
 
-<a href="<?php echo $domain; ?>">
-	<?php echo 'mod_osmap_background_toolbar'; ?>
-</a>
+</div>
