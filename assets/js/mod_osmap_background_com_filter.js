@@ -107,9 +107,24 @@ window.mod_osmap_background_com_filter = function () {
      * @returns {Promise<unknown>}
      */
     this.modOsmapBackgroundComFilterStartMap = function (){
-        return new Promise(function (resolveAll, rejectAll){
+       return new Promise(function (resolveAll, rejectAll){
             self.createComFilterMap().then(function (r){
-                resolveAll('Com_Filter Map Complete ');
+                if ( +r.data.count === +r.data.offset ) {
+                    console.log( 'mod_osmap_background_com_filter' , 'Osmap Background Com_Filter - FINISH' );
+                    console.log( 'mod_osmap_background_com_filter indexFile' , self.indexFile );
+                    console.log( 'mod_osmap_background_com_filter offsetLink' , self.offsetLink );
+                    console.log( 'mod_osmap_background_com_filter +r.data.count' , +r.data.count );
+                    console.log( 'mod_osmap_background_com_filter +r.data.offset' , +r.data.offset );
+
+                    resolveAll( r );
+                    console.log( 'mod_osmap_background_com_filter - r ' , r );
+                    console.log( 'mod_osmap_background_com_filter' , '--resolveAll--' );
+                    window.Mod_jshopping_slider_module.onEventMapGo()
+
+                }
+
+
+
             })
         })
     }
@@ -128,9 +143,25 @@ window.mod_osmap_background_com_filter = function () {
             Data.method = 'createComFilterMap';
             Data.indexFile =  self.indexFile;
             Data.offset = self.offsetLink ;
+            Data.module_params = window.Mod_jshopping_slider_module._params ;
+
+
             self.AjaxPost( Data , Params  ).then(function (r){
 
-                resolve( 'Com Filter Map Complete' );
+
+                if ( +r.data.offset < +r.data.count ){
+                    self.indexFile = +r.data.indexFile ;
+                    self.offsetLink = +r.data.offset ;
+                    self.modOsmapBackgroundComFilterStartMap().then(function (r){
+                        // resolve( r  );
+                    },function (err){console.log(err)});
+
+                }else{
+                    console.log( 'mod_osmap_background_com_filter+' , 'Com Filter Map Complete' );
+                    resolve( r );
+                }
+
+
             },function (err){ console.log( err ); })
         });
     }
@@ -200,7 +231,7 @@ window.mod_osmap_background_com_filter = function () {
 
 // Start prototype
     function start() {
-        window.mod_osmap_background_com_filter.prototype = new GNZ11();
+        window.mod_osmap_background_com_filter.prototype = window.Mod_jshopping_slider_module;
         window.Mod_osmap_background_com_filter = new window.mod_osmap_background_com_filter();
     }
 })()

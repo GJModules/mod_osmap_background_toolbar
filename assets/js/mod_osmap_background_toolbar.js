@@ -78,7 +78,11 @@ window.mod_osmap_background_tool = function () {
         document.addEventListener('click' , function (e){
             console.log( e.target.dataset.evt )
             switch (e.target.dataset.evt) {
-                case "map-go" : self.onEventMapGo(); break ;
+                // Клик по кнопке - создать кару сайта
+                case "map-go" :
+                    console.log( 'mod_osmap_background_toolbar - Количество плагинов' , self._params.plugins.length );
+                    self.onEventMapGo();
+                    break ;
             }
         });
     }
@@ -98,11 +102,17 @@ window.mod_osmap_background_tool = function () {
      * Создать карту сайта
      */
     this.onEventMapGo = function ( ){
-        var countPlugins = this._params.plugins.length ;
 
-        if ( countPlugins < this.counterPlugins ) return ;
+        if ( self._params.plugins.length < self.counterPlugins ) return ;
 
-        var pluginObj = this._params.plugins[this.counterPlugins]
+        if ( self._params.plugins.length === self.counterPlugins ){
+            self.createFileAllMapXml().then(function (r){
+                return;
+            },function (err){console.log(err)});;
+            return;
+        }
+
+        var pluginObj = this._params.plugins[self.counterPlugins]
         var Data = {
             option : 'com_osmap',
             view : 'xml',
@@ -112,6 +122,9 @@ window.mod_osmap_background_tool = function () {
 
         }
         var urlParamQuery = '';
+        
+        console.log( 'mod_osmap_background_toolbar -- Текущий плагин компонента:' , pluginObj.element ); 
+        
         if ( pluginObj.element !== 'com_menu' ) {
 
             Data.component =  pluginObj.element;
@@ -132,10 +145,10 @@ window.mod_osmap_background_tool = function () {
                 .then(function (e){
                     console.info( 'mod_osmap_background_virtuemart - Is Loaded!' );
                     window.Mod_osmap_background_virtuemart.VirtuemartStartMap().then(function (r){
-                        if ( countPlugins === self.counterPlugins ) return ;
+                        if ( self._params.plugins.length === self.counterPlugins ) return ;
                         console.log(r);
 
-                        if ( countPlugins !== self.counterPlugins ) {
+                        if ( self._params.plugins.length !== self.counterPlugins ) {
                             self.onEventMapGo();
                         }else{
                             self.createFileAllMapXml();
@@ -152,7 +165,12 @@ window.mod_osmap_background_tool = function () {
                 .then(function (r){
                     console.info( 'mod_osmap_background_com_filter - Is Loaded!' );
                     window.Mod_osmap_background_com_filter.modOsmapBackgroundComFilterStartMap().then(function (r){
-                        if ( countPlugins !== self.counterPlugins ) {
+
+                        console.log( 'mod_osmap_background_toolbar com_filter' , r );
+                        
+
+
+                        if ( self._params.plugins.length !== self.counterPlugins ) {
                             self.onEventMapGo();
                         }else{
                             self.createFileAllMapXml();
@@ -160,6 +178,7 @@ window.mod_osmap_background_tool = function () {
 
                     },function (err){console.log(err)});
             },function (err){console.log(err)});
+            return;
         }
 
 
@@ -194,6 +213,8 @@ window.mod_osmap_background_tool = function () {
      * @returns {Promise<unknown>}
      */
     this.createFileAllMapXml = function (){
+        // Сбрасываем счетчик отработанных плагинов
+        self.counterPlugins = 0 ;
         return new Promise(function(resolve, reject) {
             var Params = {
                 // URL : self._params.URL,
@@ -207,13 +228,14 @@ window.mod_osmap_background_tool = function () {
             Data.module = 'osmap_background_toolbar' ;
             Data.method = 'createFileAllMapXml';
             self.AjaxPost( Data , Params  ).then(function (r){
+
                 alert('All Map Xml Complete')
 
                 resolve( 'All Map Xml Complete' );
             },function (err){ console.log( err ); })
         });
     }
-
+    
 
     /**
      * Отправить запрос

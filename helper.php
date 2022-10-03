@@ -1,13 +1,22 @@
 <?php
 
+use OsmapBackgroundHelper\BackgroundComponent;
+
 JLoader::registerNamespace( 'OsmapBackgroundHelper' , JPATH_ADMINISTRATOR . '/modules/mod_osmap_background_toolbar/helpers' , $reset = false , $prepend = false , $type = 'psr4' );
 
-class ModOsmapBackgroundToolbarHelper
+$config = \Joomla\CMS\Factory::getConfig();
+$config->set('debug' , 1 );
+$config->set('error_reporting' , 'development' );
+
+class ModOsmapBackgroundToolbarHelper extends BackgroundComponent
 {
 
     public static function createFileAllMapXmlAjax(){
-        $helper = new \OsmapBackgroundHelper\BackgroundComponent();
-        $helper->createFileAllMapXml();
+        $helperBackgroundComponent = new \OsmapBackgroundHelper\BackgroundComponent();
+	    $returnData = $helperBackgroundComponent->createFileAllMapXml();
+
+	    echo new JResponseJson( $returnData , 'Основной файл карты сайта создан' , false );
+	    die();
     }
 
     /**
@@ -18,11 +27,8 @@ class ModOsmapBackgroundToolbarHelper
      */
     public static function createComFilterMapAjax(){
 
-
         $helperComFilter = new  \OsmapBackgroundHelper\ComFilter();
-        $returnData = [
-            'ComFilterData' => $helperComFilter->createFilterMap(),
-        ];
+        $returnData =   $helperComFilter->createFilterMap() ;
         echo new JResponseJson( $returnData , 'Ссылки фильтра добавлены в карту сайта' , false );
         die();
     }
@@ -91,9 +97,5 @@ class ModOsmapBackgroundToolbarHelper
         die();
     }
 
-    protected static function getPluginSetting(){
-        $plugin = \Joomla\CMS\Plugin\PluginHelper::getPlugin('osmap', 'com_virtuemart');
-        $Registry = new \Joomla\Registry\Registry();
-        return $Registry->loadObject( json_decode( $plugin->params ))->toArray();
-    }
+
 }

@@ -2,6 +2,8 @@
 
 namespace OsmapBackgroundHelper;
 
+use JDatabaseQueryMysqli;
+
 class ComFilter extends BackgroundComponent
 {
     protected $db ;
@@ -11,6 +13,7 @@ class ComFilter extends BackgroundComponent
     public function __construct()
     {
         $this->db = \JFactory::getDbo();
+	    parent::__construct();
     }
 
     /**
@@ -19,21 +22,39 @@ class ComFilter extends BackgroundComponent
      * @throws \Exception
      * @since 3.9
      */
-    public function createFilterMap(){
+    public function createFilterMap(): array
+    {
         $app = \Joomla\CMS\Factory::getApplication();
-        $offset = $app->input->get('offset' , 0, 'INT');
+		$offset = $app->input->get('offset' , 0, 'INT');
         // Номер файла
         $indexFile = $app->input->get('indexFile' , 0, 'INT');
+		$limit_links = $this->params['modOsmapBackgroundToolbar_params']['limit_links'];
 
 
+        
+		/** @var JDatabaseQueryMysqli $Query */
         $Query = $this->db->getQuery(true);
         $select = [
             $this->db->quoteName('sef_url'),
+
         ];
         $Query->select( $select );
         $Query->from( $this->db->quoteName('#__cf_customfields_setting_seo'));
+	    $Query->setLimit( $limit_links , $offset );
         $this->db->setQuery($Query);
-        $resultFiltersUrl = $this->db->loadColumn( 0   );
+
+        /** @var array $resultFiltersUrl */
+        $resultFiltersUrl = $this->db->loadColumn( 0 );
+
+
+	    $Query = $this->db->getQuery(true);
+	    $Query->select( 'COUNT(*)' );
+	    $Query->from( $this->db->quoteName('#__cf_customfields_setting_seo'));
+	    $Query->setLimit( 0 , 0 );
+	    $this->db->setQuery($Query);
+		/** @var int $count */
+	    $count = $this->db->loadResult();
+
 
 
         foreach ( $resultFiltersUrl as $item)
@@ -41,18 +62,21 @@ class ComFilter extends BackgroundComponent
             $offset ++ ;
             $this->addUrlLocTag( $item );
         }#END FOREACH
-        $this->writeFileMap( $indexFile ,'link' );
+
+
+
+	    $this->writeFileMap( $indexFile ,'link' );
 
         $indexFile ++ ;
 
         $returnData = [
-            'offset'=> $offset ,
-            'indexFile'=> $indexFile ,
+	        'count'     => $count,         // Общее количество SEF ссылок фильтра
+	        'offset'    => $offset,        // Индекс строки на которой закончилась выборка
+	        'indexFile' => $indexFile,
         ];
         return $returnData ;
 
-//        echo'<pre>';print_r( $resultFiltersUrl );echo'</pre>'.__FILE__.' '.__LINE__;
-//        die(__FILE__ .' '. __LINE__ );
+
 
     }
 }
