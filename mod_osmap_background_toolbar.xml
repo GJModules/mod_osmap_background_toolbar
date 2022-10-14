@@ -9,15 +9,17 @@
 	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
 
 	<creationDate>13.10.22-15:15</creationDate>
-	<version>1.5.0</version>
+	<version>1.5.1</version>
 
 	<description>MOD_OSMAP_BACKGROUND_TOOLBAR_XML_DESCRIPTION</description>
 
 	<files>
 		<filename module="mod_osmap_background_toolbar">mod_osmap_background_toolbar.php</filename>
 		<folder>assets</folder>
+		<folder>helpers</folder>
 		<folder>language</folder>
 		<folder>tmpl</folder>
+		<filename>helper.php</filename>
 		<filename>mod_osmap_background_toolbar.xml</filename>
 	</files>
 
