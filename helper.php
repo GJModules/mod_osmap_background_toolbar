@@ -10,7 +10,11 @@ $config->set('error_reporting' , 'development' );
 
 class ModOsmapBackgroundToolbarHelper extends BackgroundComponent
 {
-
+	/**
+	 * Прокси создание All Map Xml
+	 *
+	 * @since version
+	 */
     public static function createFileAllMapXmlAjax(){
         $helperBackgroundComponent = new \OsmapBackgroundHelper\BackgroundComponent();
 	    $returnData = $helperBackgroundComponent->createFileAllMapXml();

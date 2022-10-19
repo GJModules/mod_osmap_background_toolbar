@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PhpIncludePathManager">
+    <include_path>
+      <path value="/media/windows/PhpData/JoomlaInstall/Joomla_3.10.9" />
+      <path value="$PROJECT_DIR$/../../FilterSeo/AllFileSite/configuration.php" />
+    </include_path>
+  </component>
+</project>

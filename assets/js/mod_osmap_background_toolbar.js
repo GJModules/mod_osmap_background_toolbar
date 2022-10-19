@@ -220,7 +220,8 @@ window.mod_osmap_background_tool = function () {
                 // URL : self._params.URL,
             }
 
-            var Data =  self.AjaxDefaultData  ;
+            // var Data =  self.AjaxDefaultData  ;
+            var Data =  {}   ;
             Data.option =  'com_ajax' ;
             Data.task = null ;
             Data.view = null ;
@@ -263,11 +264,18 @@ window.mod_osmap_background_tool = function () {
      * @constructor
      */
     this.AjaxPost = function ( Data ,   Params  ) {
+        console.log( 'mod_osmap_background_toolbar' , Data );
+        
         var data = $.extend(true, this.AjaxDefaultData, Data);
+        if (Data.option ===  'com_ajax') data.option =  'com_ajax'
+
         return new Promise(function (resolve, reject) {
             self.getModul("Ajax").then(function (Ajax) {
                 // Не обрабатывать сообщения
                 Ajax.ReturnRespond = true;
+                if ( data.method === 'createFileAllMapXml'){
+                    data.option = 'com_ajax'
+                }
                 // Отправить запрос
                 Ajax.send( data , 'mod_osmap_background_tool' , Params ).then(function (r) {
                     resolve(r);

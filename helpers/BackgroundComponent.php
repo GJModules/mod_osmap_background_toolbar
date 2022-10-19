@@ -44,6 +44,9 @@ class BackgroundComponent
 	    $filepath = $_SERVER['DOCUMENT_ROOT'];
 	    $files    = glob($filepath . '/sitemap-com_*');
 
+//		echo'<pre>';print_r( $files );echo'</pre>'.__FILE__.' '.__LINE__;
+//		die(__FILE__ .' '. __LINE__ );
+
 
 	    foreach ($files as &$file)
 	    {
@@ -84,8 +87,10 @@ class BackgroundComponent
 	 * @since version
 	 */
 	protected function addFileSitemapLoc( $url ){
+		$url = preg_replace('/^\//' , '' , $url );
 		$link = \JUri::root().$url ;
-		$link = str_replace('//' , '/' , $link );
+
+
 		$this->urlLocTag .= '<sitemap>';
 		$this->urlLocTag .=     '<loc>'.$link.'</loc>';
 		$this->urlLocTag .= '</sitemap>';
@@ -154,9 +159,8 @@ class BackgroundComponent
      * @since 3.9
      */
     protected function addUrlLocTag( $url ){
+	    $url = preg_replace('/^\//' , '' , $url );
         $link = \JUri::root().$url ;
-        $link = str_replace('//' , '/' , $link );
-
         $this->urlLocTag .= '<url>';
         $this->urlLocTag .=     '<loc>'.$link.'</loc>';
         $this->urlLocTag .= '</url>';

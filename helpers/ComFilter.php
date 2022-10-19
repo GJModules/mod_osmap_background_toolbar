@@ -39,7 +39,8 @@ class ComFilter extends BackgroundComponent
 
         ];
         $Query->select( $select );
-        $Query->from( $this->db->quoteName('#__cf_customfields_setting_seo'));
+        $Query->from( $this->db->quoteName('#__cf_customfields_setting_seo'))
+	        ->where($this->db->quoteName('no_index') . ' = 0 ' );
 	    $Query->setLimit( $limit_links , $offset );
         $this->db->setQuery($Query);
 
@@ -49,7 +50,8 @@ class ComFilter extends BackgroundComponent
 
 	    $Query = $this->db->getQuery(true);
 	    $Query->select( 'COUNT(*)' );
-	    $Query->from( $this->db->quoteName('#__cf_customfields_setting_seo'));
+	    $Query->from( $this->db->quoteName('#__cf_customfields_setting_seo'))
+		    ->where($this->db->quoteName('no_index') . ' = 0 ' );
 	    $Query->setLimit( 0 , 0 );
 	    $this->db->setQuery($Query);
 		/** @var int $count */
