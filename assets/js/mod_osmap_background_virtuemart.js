@@ -85,6 +85,18 @@ window.mod_osmap_background_virtuemart = function () {
 
     /* -----------------------------------------------------------  */
 
+    /**
+     *  Массив включенных языков для многоязычных сайтов
+     *  @type {array}
+     */
+    this.languagesSef = window.Mod_jshopping_slider_module._params.languagesSef ;
+    /**
+     * Счетчик перебираемых языков
+     * @type {number|number|*}
+     */
+    this.counterLanguages = window.Mod_jshopping_slider_module.counterLanguages ;
+
+    /* -----------------------------------------------------------  */
 
     /**
      * Start Init
@@ -100,7 +112,6 @@ window.mod_osmap_background_virtuemart = function () {
 
         // Параметры Ajax Default
         this.setAjaxDefaultData();
-
 
         self.AjaxDefaultData.module = 'osmap_background_toolbar';
         this.addEvtListener();
@@ -133,38 +144,60 @@ window.mod_osmap_background_virtuemart = function () {
      * @constructor
      */
     this.VirtuemartStartMap = function (){
-        return new Promise(function (resolveAll, rejectAll){
-            self.VirtuemartGetCategoryId().then(function (r){
+        // Если включено MultiLanguage и еще не перебрали все установленные языки
+        /*if (
+            window.Mod_jshopping_slider_module._params.languagesSef.length
+            && window.Mod_jshopping_slider_module._params.languagesSef.length !== window.Mod_jshopping_slider_module.counterLanguages + 1 ){
+            // Переставляем на следующий язык
+            self.counterLanguages++;
+            self.onEventMapGo();
+            return ;
+        }*/
+        console.log( 'mod_osmap_background_virtuemart VirtuemartStartMap languagesSef' , this.languagesSef );
+        console.log( 'mod_osmap_background_virtuemart VirtuemartStartMap counterLanguages' , this.counterLanguages );
+
+
+        return new Promise(function (resolveAll, rejectAll) {
+            self.VirtuemartGetCategoryId().then(function (r) {
+
+
                 var categoryList = r.data.categories;
 
                 // Loop Category
-                for (let i = 0 ; i < categoryList.length ; i++ ) {
-                    var virtuemartCategoryId = categoryList[i].virtuemart_category_id ;
-                    self.categoryObjectSlug[ virtuemartCategoryId ] = categoryList[i].sef ;
+                for (let i = 0; i < categoryList.length; i++) {
+                    var virtuemartCategoryId = categoryList[i].virtuemart_category_id;
+                    self.categoryObjectSlug[virtuemartCategoryId] = categoryList[i].sef;
                 }
+
+
+
                 // Загружаем все товары
-                self.VirtuemartGetProductsInCategory( self.categoryObjectSlug   ).then(
-                    function (r){
-                        self.createMapXmlCategory().then(function (r){
+                self.VirtuemartGetProductsInCategory( self.categoryObjectSlug ).then(function (r) {
+                        resolveAll('Virtuemart Complete!')
+                    /*self.createMapXmlProducts().then(function (r) {
 
-                            self.createMapXmlProducts().then(function (r){
-                                resolveAll('Virtuemart Complete!')
-                            },function (err){ console.log( 'mod_osmap_background_virtuemart' , err ); })
-
-                        },function (err){console.log( 'mod_osmap_background_virtuemart' , err ); })
-                        /*Promise.all([
-                             ,
-                             ,
-                        ]).then( function ( r ) {
-                            alert('Alles Gut!');
+                        }, function (err) {
+                            console.log('mod_osmap_background_virtuemart', err);
                         });*/
+
+                    /*self.createMapXmlCategory().then(function (r) {
+
+
+
+                        }, function (err) {
+                            console.log('mod_osmap_background_virtuemart', err);
+                        })*/
 
 
                     },
-                    function (err){console.log( 'mod_osmap_background_virtuemart' , err );}
+                    function (err) {
+                        console.log('mod_osmap_background_virtuemart', err);
+                    }
                 )
 
-            },function (err){ console.log( err );});
+            }, function (err) {
+                console.log(err);
+            });
         })
 
     }
@@ -247,10 +280,14 @@ window.mod_osmap_background_virtuemart = function () {
     this.VirtuemartGetCategoryId = function (){
         return new Promise(function(resolve, reject) {
             var Params = {
-                // URL : self._params.URL,
+                 // URL : self._params.URL,
             }
+
             var Data = self.AjaxDefaultData ;
             Data.method = 'getCategoryIdList';
+            Data.lang = 'getCategoryIdList';
+
+
             self.AjaxPost( Data , Params  ).then(function (r){
                 resolve( r );
             },function (err){ console.log( err ); })
@@ -267,20 +304,19 @@ window.mod_osmap_background_virtuemart = function () {
      */
     this.VirtuemartGetProductsInCategory = async function ( categoryListSlug ){
 
+        
         return new Promise(function(resolve, reject) {
             var Params = {
                 // URL : self._params.URL,
             }
             var Data = self.AjaxDefaultData ;
-            // Data.group = 'system';
-            // Data.plugin = 'plg_system_osmap_background';
-            // Data.module = null ;
             Data.method = 'getProductsLinkList';
             Data.categoryListSlug = categoryListSlug ;
 
             self.AjaxPost( Data , Params  ).then(function (r){
                 self.ListProducts = r.data.LisProducts
-
+                console.log( 'mod_osmap_background_virtuemart' , r.data ); 
+                
                 resolve( r );
             },function (err){ console.log( err ); })
         });

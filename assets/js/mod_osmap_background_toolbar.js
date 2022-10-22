@@ -97,7 +97,11 @@ window.mod_osmap_background_tool = function () {
      * @type {number}
      */
     this.counterPlugins = 0 ;
-
+    /**
+     * Счетчик для тегов языков Multilanguage Sites
+     * @type {number}
+     */
+    this.counterLanguages = 0 ;
     /**
      * Создать карту сайта
      */
@@ -111,64 +115,97 @@ window.mod_osmap_background_tool = function () {
             },function (err){console.log(err)});;
             return;
         }
+        console.log( 'mod_osmap_background_toolbar' , this._params );
+
+
 
         var pluginObj = this._params.plugins[self.counterPlugins]
         var Data = {
             option : 'com_osmap',
             view : 'xml',
             id: 1 ,
+            languagesSef : this._params.languagesSef ,
             format : 'xml' ,
             task : 'background_map',
 
         }
-        var urlParamQuery = '';
-        
-        console.log( 'mod_osmap_background_toolbar -- Текущий плагин компонента:' , pluginObj.element ); 
-        
-        if ( pluginObj.element !== 'com_menu' ) {
+        console.log( 'mod_osmap_background_toolbar -- Текущий плагин компонента:' , pluginObj.element );
 
+        var urlParamQuery = '';
+
+        // Если включено MultiLanguage
+        if ( this._params.languagesSef.length ){
+            Data.lang = this._params.languagesSef[ this.counterLanguages ];
+            console.log( 'mod_osmap_background_toolbar -- Текущий язык :' , Data.lang );
+        }
+
+
+        if ( pluginObj.element !== 'com_menu' ) {
             Data.component =  pluginObj.element;
-            if ( Data.component === 'joomla' )  Data.component = 'com_content' ;
+            if ( Data.component === 'joomla' )  {
+
+            }
             urlParamQuery = '?component='+Data.component
 
         }
 
-        Params = {
-            URL : this._params.URL+ urlParamQuery ,
+        var Params = {
+            URL : this._params.URL + urlParamQuery ,
             dataType : this._params.dataType ,
         }
 
+        if ( this._params.languagesSef.length && pluginObj.element  === 'com_menu' ){
+            Params.URL +=  Data.lang +'/';
+        }
 
+        if ( this._params.languagesSef.length && pluginObj.element  === 'joomla' ){
+            Data.component = 'com_content' ;
+            urlParamQuery = '?component='+Data.component
+            Params.URL  = this._params.URL + Data.lang +'/' + urlParamQuery;
+        }
+
+        console.log( 'mod_osmap_background_toolbar -- URl запроса:' , Params.URL );
+
+
+        // com_virtuemart
         if ( this._params.plugins[this.counterPlugins].element === 'com_virtuemart' ){
-            self.counterPlugins++;
-            self.load.js('/administrator/modules/mod_osmap_background_toolbar/assets/js/mod_osmap_background_virtuemart.js')
-                .then(function (e){
-                    console.info( 'mod_osmap_background_virtuemart - Is Loaded!' );
-                    window.Mod_osmap_background_virtuemart.VirtuemartStartMap().then(function (r){
-                        if ( self._params.plugins.length === self.counterPlugins ) return ;
-                        console.log(r);
 
-                        if ( self._params.plugins.length !== self.counterPlugins ) {
+            self.load.js(
+                '/administrator/modules/mod_osmap_background_toolbar/assets/js/mod_osmap_background_virtuemart.js?__v='
+                + this._params.__v
+            ).then(function (e) {
+
+                console.info('------------------- mod_osmap_background_virtuemart - Is Loaded!-------------');
+                window.Mod_osmap_background_virtuemart.VirtuemartStartMap()
+                    .then(function (r) {
+                        // Переход к следующему плагину
+                        self.counterPlugins++;
+
+                        if (self._params.plugins.length === self.counterPlugins) return;
+
+
+                        if (self._params.plugins.length !== self.counterPlugins) {
                             self.onEventMapGo();
-                        }else{
+                        } else {
                             self.createFileAllMapXml();
                         }
-                    },function (err){console.log(err)});;
-                },function (err){ console.log( err );});
+                    }, function (err) { console.log(err) });
+
+            }, function (err) { console.log(err);  });
 
             return;
         }
-
+        // com_filter
         if ( this._params.plugins[this.counterPlugins].element === 'com_filter' ){
             self.counterPlugins++;
-            self.load.js('/administrator/modules/mod_osmap_background_toolbar/assets/js/mod_osmap_background_com_filter.js')
-                .then(function (r){
+            self.load.js(
+                '/administrator/modules/mod_osmap_background_toolbar/assets/js/mod_osmap_background_com_filter.js?'
+                + this._params.__v
+            ).then(function (r){
                     console.info( 'mod_osmap_background_com_filter - Is Loaded!' );
                     window.Mod_osmap_background_com_filter.modOsmapBackgroundComFilterStartMap().then(function (r){
 
                         console.log( 'mod_osmap_background_toolbar com_filter' , r );
-                        
-
 
                         if ( self._params.plugins.length !== self.counterPlugins ) {
                             self.onEventMapGo();
@@ -183,11 +220,21 @@ window.mod_osmap_background_tool = function () {
 
 
 
-        var Timeout = 10000 ;
+        var Timeout = 10000 ; // Пауза - между запросами при возникновении ошибки
         self.AjaxPost(Data, Params).then(
             function (r) {
+                 // Если включено MultiLanguage и еще не перебрали все установленные языки
+                if ( self._params.languagesSef.length && self._params.languagesSef.length !== self.counterLanguages + 1 ){
+                    // Переставляем на следующий язык
+                    self.counterLanguages++;
+                    self.onEventMapGo();
+                    return ;
+                }
+                // Сбрасываем счетчик языков
+                self.counterLanguages = 0 ;
                 self.counterPlugins++;
-                console.log(r);
+                console.log( 'mod_osmap_background_toolbar' , r );
+                
                 self.onEventMapGo();
             },
             function (err) {

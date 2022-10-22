@@ -67,7 +67,7 @@ class ComFilter extends BackgroundComponent
 
 
 
-	    $this->writeFileMap( $indexFile ,'link' );
+	    $this->writeFileMap(  'link' );
 
         $indexFile ++ ;
 

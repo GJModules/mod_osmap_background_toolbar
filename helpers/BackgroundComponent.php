@@ -3,6 +3,8 @@
 namespace OsmapBackgroundHelper;
 
 use Joomla\CMS\Filesystem\File as JFile;
+use Joomla\CMS\Language\LanguageHelper;
+use Joomla\CMS\Language\Multilanguage;
 
 class BackgroundComponent
 {
@@ -11,6 +13,21 @@ class BackgroundComponent
 	 * @since 3.9
 	 */
 	protected $component;
+	/**
+	 * @var string - sef tag - обрабатываемого языка
+	 * @since version
+	 */
+	protected $language ;
+	/**
+	 * @var array|null Массив с установленными языками -- или NULL - если Multilanguage - OFF
+	 * @since version
+	 */
+	protected $languages = null ;
+	/**
+	 * @var int Счетчик для языков
+	 * @since version
+	 */
+	protected $countLanguages = 0 ;
 	/**
 	 * Хранение тегов <url><loc>....<loc><url>
 	 * @var string
@@ -25,16 +42,31 @@ class BackgroundComponent
 	protected $contextRootFiles = 'root' ;
 
 	protected $params = [] ;
+	/**
+	 * @var \JDatabaseDriver|null
+	 * @since version
+	 */
+	protected $db;
+
 	public function __construct()
 	{
 		$app          = \Joomla\CMS\Factory::getApplication();
 		$this->params = $app->input->get('module_params' , [] , 'ARRAY' );
+
+		// Get the active languages for multi-language sites
+		if ( Multilanguage::isEnabled() ) {
+			$this->languages = LanguageHelper::getLanguages();
+			$this->language = mb_strtolower ( $this->languages[ $this->countLanguages ]->lang_code ) ;
+			$this->language = str_replace( '-' , '_' ,  $this->language ) ;
+		}
+		$this->db = \JFactory::getDbo();
 	}
 
 
 	/**
 	 * Создать основной файл карты сайта
 	 * @return string[]
+	 * @throws \Exception
 	 * @since 3.9
 	 */
     public function createFileAllMapXml(): array
@@ -82,21 +114,20 @@ class BackgroundComponent
     }
 
 	/**
-	 * Добавление ссылок  на файлы карт компонентов ect/ (sitemap-com_content-1.xml , sitemap-com_virtuemart-category-1.xml)
+	 * Добавление ссылок  на файлы карт компонентов
+	 * ect/ (sitemap-com_content-1.xml , sitemap-com_virtuemart-category-1.xml)
+	 *
 	 * @param $url
+	 *
 	 * @since version
 	 */
 	protected function addFileSitemapLoc( $url ){
 		$url = preg_replace('/^\//' , '' , $url );
 		$link = \JUri::root().$url ;
-
-
 		$this->urlLocTag .= '<sitemap>';
 		$this->urlLocTag .=     '<loc>'.$link.'</loc>';
 		$this->urlLocTag .= '</sitemap>';
 	}
-
-
 
 	/**
 	 * Создать основной файл карты сайта
@@ -123,7 +154,7 @@ class BackgroundComponent
 	 *
 	 * @since version
 	 */
-	public function writeFile($context, $indexFile, string $mapContent): string
+	public function writeFile( $context, $indexFile, string $mapContent): string
 	{
 		if ( $indexFile )
 		{
@@ -165,20 +196,40 @@ class BackgroundComponent
         $this->urlLocTag .=     '<loc>'.$link.'</loc>';
         $this->urlLocTag .= '</url>';
     }
-    /**
-     * Запись в файл sitemap-com_...-{$context}-{$indexFile}.xml
-     * @param $indexFile
-     * @param $context
-     * @return void
-     * @since 3.9
-     */
-    protected function writeFileMap( $indexFile , $context ){
 
-        $mapContent = '<?xml version="1.0" encoding="UTF-8"?>';
+	/**
+	 * Запись в файл sitemap-com_...-{$context}-{$indexFile}.xml
+	 *
+	 * @param   bool|string  $context
+	 *
+	 * @return void
+	 * @throws \Exception
+	 * @since 3.9
+	 */
+    protected function writeFileMap( $context = false  ){
+		try
+		{
+			if ( !$context ) throw new \Exception(' Переменная $context - пуста '.__FILE__.':'.__LINE__) ; #END IF
+
+		}
+		catch (\Exception $e)
+		{
+		    // Executed only in PHP 5, will not be reached in PHP 7
+		    echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
+		    echo'<pre>';print_r( $e );echo'</pre>'.__FILE__.' '.__LINE__;
+		    die(__FILE__ .' '. __LINE__ );
+		}
+
+		$app = \Joomla\CMS\Factory::getApplication();
+		// Номер файла
+	    $indexFile = $app->input->get('indexFile' , 1 , 'INT');
+
+		$mapContent = '<?xml version="1.0" encoding="UTF-8"?>';
         $mapContent .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
         $mapContent .=      $this->urlLocTag ;
         $mapContent .= '</urlset>';
-
+		// Очистить - хранение тегов
+	    $this->urlLocTag = '';
 	    return $this->writeFile($context, $indexFile, $mapContent);
     }
 
@@ -214,4 +265,17 @@ class BackgroundComponent
 		return $Registry->loadObject( json_decode( $plugin->params ))->toArray();
 	}
 
+	/**
+	 * Переставить на следующий язык - для Многоязычных сайтов
+	 *
+	 * @since version
+	 */
+	protected function changeLang(){
+		$sefLang = $this->languages[ $this->countLanguages ]->sef ;
+		$this->categoryResultMultilanguage[$sefLang] = $this->categoryResult ;
+		$this->countLanguages ++ ;
+
+		$this->language = mb_strtolower ( $this->languages[ $this->countLanguages ]->lang_code ) ;
+		$this->language = str_replace( '-' , '_' ,  $this->language ) ;
+	}
 }

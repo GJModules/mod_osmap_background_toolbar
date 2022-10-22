@@ -2,20 +2,38 @@
 
 namespace OsmapBackgroundHelper;
 
+use Exception;
 use Joomla\CMS\Filesystem\File as JFile;
 use JRoute;
+use Joomla\CMS\Language\LanguageHelper;
+use Joomla\CMS\Language\Multilanguage;
 
 class Virtuemart extends BackgroundComponent
 {
-    protected $db ;
+
     protected $component = 'com_virtuemart';
 
-    public function __construct()
+	/**
+	 * @var array save category data
+	 * @since version
+	 */
+	protected $categoryResult = [];
+
+	protected $categoryResultMultilanguage  = [] ;
+	/**
+	 * @var array - хранение найденных товаров
+	 * @since version
+	 */
+	protected $productsResult = [] ;
+
+	public function __construct()
     {
         if (!class_exists('VmConfig')) require_once JPATH_ADMINISTRATOR . '/components/com_virtuemart/helpers/config.php';
         \VmConfig::loadConfig();
 
-        $this->db = \JFactory::getDbo();
+		parent::__construct();
+
+
     }
 
     public $childCategoriesId = array();
@@ -34,6 +52,8 @@ class Virtuemart extends BackgroundComponent
      */
     public function getCategories()
     {
+		die(__FILE__ .' '. __LINE__ );
+
         $categoryData = array();
         $categoryModel = \VmModel::getModel('category');
         $categories = $categoryModel->getCategoryTree(0, 0, false);
@@ -80,9 +100,12 @@ class Virtuemart extends BackgroundComponent
         //fetch all relevant data required
         $categoryData['virtuemartCategoryId'] = $categoryId;
         // Создать SEF ссылку на категорию
-        $url = 'index.php?option=com_virtuemart&view=category&virtuemart_category_id='.$categoryId.'&virtuemart_manufacturer_id=0';
+        $url = 'index.php?option=com_virtuemart&view=category&virtuemart_category_id='.$categoryId.'&virtuemart_manufacturer_id=0&lang=de';
         $categoryData['sef'] = JRoute::link('site', $url )  ;
         $categoryData['ItemId'] = $this->getItemId( $categoryData['sef'] , $categoryId ) ;
+
+		echo'<pre>';print_r( $categoryData );echo'</pre>'.__FILE__.' '.__LINE__;
+		die(__FILE__ .' '. __LINE__ );
 
 
         $categoryData['categoryName'] = $tempCategory->category_name;
@@ -129,15 +152,17 @@ class Virtuemart extends BackgroundComponent
     }
 
 
-    /**
-     * Получить все категории одним списком
-     * @return array|mixed
-     * @since 3.9
-     * TODO - Не используется
-     */
+	/**
+	 * Получить все категории одним списком
+	 * @return array|mixed
+	 * @throws Exception
+	 * @since 3.9
+	 *        TODO - Не используется
+	 */
     public function getListCategory(){
+	    $app = \Joomla\CMS\Factory::getApplication();
 
-        $Query = $this->db->getQuery(true);
+	    $Query = $this->db->getQuery(true);
         $selectArr = [
             $this->db->quoteName('vmCat.virtuemart_category_id'),
             $this->db->quoteName('vmCatLang.category_name'),
@@ -145,34 +170,62 @@ class Virtuemart extends BackgroundComponent
         $Query->select($selectArr);
         $Query->from( $this->db->quoteName( '#__virtuemart_categories' , 'vmCat' ));
         $Query->leftJoin(
-            $this->db->quoteName( '#__virtuemart_categories_' . VMLANG  , 'vmCatLang' )
+            $this->db->quoteName( '#__virtuemart_categories_' . $this->language  , 'vmCatLang' )
             .'ON vmCat.virtuemart_category_id = vmCatLang.virtuemart_category_id'
         );
 
-        $whereArr = [
-            'vmCat.published = 1'
-        ];
+        $whereArr = [ 'vmCat.published = 1' , ];
         $Query->where( $whereArr ) ;
 
         $this->db->setQuery( $Query );
         $categoryResult = $this->db->loadObjectList() ;
 
+
+		// Перебираем категории создаем SEF ссылку
         foreach ( $categoryResult as &$item)
         {
-            $url = 'index.php?option=com_virtuemart&view=category&virtuemart_category_id='.$item->virtuemart_category_id.'&virtuemart_manufacturer_id=0';
-            $item->sef = JRoute::link('site', $url )  ;
+            $url = 'index.php?option=com_virtuemart&view=category'
+	            .'&virtuemart_category_id='.$item->virtuemart_category_id
+	            .'&virtuemart_manufacturer_id=0'
+                // Добавить sef - lang - если Multilanguage ON
+	            . ($this->languages ? '&lang='.$this->languages[ $this->countLanguages ]->sef : '')
+            ;
+
+	        $sefUrl = JRoute::link('site', $url );
+			// Добавить ссылку в коллекцию <url><loc>
+	        $this->addUrlLocTag( $sefUrl );
+
+	        $sefUrl = preg_replace('#^\/#' , '' , $sefUrl );
+	        $item->sef = \JUri::root() . $sefUrl   ;
+			$this->categoryResult[] = $item;
+
         }#END FOREACH
 
-        return $categoryResult ;
+		// создать карту для категорий
+	    $this->writeFileMap(  'category'.( $this->languages ?'-'.$this->languages[ $this->countLanguages ]->sef:'') );
+
+	    // Если Multilanguage ON - Устанавливаем замыкание метода для следующего языка
+	    if ( $this->languages && $this->countLanguages != count( $this->languages ) - 1 ){
+		    $this->changeLang();
+
+			$this->getListCategory();
+ 	        return $this->categoryResult  ;
+	    }
+
+        return $this->categoryResult  ;
     }
 
     /**
      * Создать файл/файлы sitemap-com_virtuemart-category-{№}.xml для категорий
      * @return array
-     * @throws \Exception
+     * @throws Exception
      * @since 3.9
      */
     public function onCreateMapXmlCategory(){
+
+		// TODO - Больше не используется
+		die(__FILE__ .' '. __LINE__ );
+
         $app = \Joomla\CMS\Factory::getApplication();
         // Array links category
         $categoryListSlug = $app->input->get('categories' , [], 'ARRAY');
@@ -190,7 +243,8 @@ class Virtuemart extends BackgroundComponent
             $this->addUrlLocTag( $item );
 
         }#END FOREACH
-        $this->writeFileMap( $indexFile ,'category' );
+
+//	    $this->writeFileMap( $indexFile ,'category' );
 
         $dataReturn = [
             'indexCategory'=> $indexCategory ,
@@ -202,12 +256,13 @@ class Virtuemart extends BackgroundComponent
     }
 
     /**
-     * Создать файл xml - с сылками на товар
+     * Создать файл xml - со ссылками на товар
      * @return array
-     * @throws \Exception
+     * @throws Exception
      * @since 3.9
      */
     public function onCreateMapXmlProducts(){
+
         $app = \Joomla\CMS\Factory::getApplication();
 
         $limitLinksFile = $app->input->get('limitLinksFile' , 1000, 'INT');
@@ -224,7 +279,7 @@ class Virtuemart extends BackgroundComponent
             $this->addUrlLocTag( $item->slugSefUrl );
 
         }#END FOREACH
-        $this->writeFileMap( $indexFile ,'products' );
+        $this->writeFileMap(  'products' );
 
         $indexFile ++ ;
 
@@ -240,17 +295,13 @@ class Virtuemart extends BackgroundComponent
     /**
      * Получить список всех товаров
      * @return array|mixed
-     * @throws \Exception
+     * @throws Exception
      * @since 3.9
      */
     public function getLisProducts( $offset = 0, $limit = 0 ){
 
         $app = \Joomla\CMS\Factory::getApplication();
         $categoryListSlug = $app->input->get('categoryListSlug' , [], 'ARRAY');
-
-
-//        echo'<pre>';print_r( $dataCategory );echo'</pre>'.__FILE__.' '.__LINE__;
-//        die(__FILE__ .' '. __LINE__ );
 
 
         $Query = $this->db->getQuery(true);
@@ -264,10 +315,11 @@ class Virtuemart extends BackgroundComponent
         ];
         $Query->select($selectArr);
         $Query->from( $this->db->quoteName( '#__virtuemart_categories' , 'c' ) );
-        $Query->leftJoin( $this->db->quoteName( '#__virtuemart_product_categories' , 'pc' )
+        $Query->leftJoin(
+			$this->db->quoteName( '#__virtuemart_product_categories' , 'pc' )
             . ' ON pc.virtuemart_category_id = c.virtuemart_category_id ');
-
-        $Query->leftJoin( '`#__virtuemart_products_' . VMLANG . '` as pl on pl.virtuemart_product_id = pc.virtuemart_product_id');
+        $Query->leftJoin(
+			'`#__virtuemart_products_' . VMLANG . '` as pl on pl.virtuemart_product_id = pc.virtuemart_product_id');
         $Query->leftJoin( '`#__virtuemart_products` as p on p.virtuemart_product_id = pc.virtuemart_product_id');
         $whereArr = [
             'p.published = 1',
@@ -280,6 +332,36 @@ class Virtuemart extends BackgroundComponent
         $this->db->setQuery( $Query , $offset  , $limit );
         $productsResult = $this->db->loadObjectList() ;
 
+	    foreach ($productsResult as $item)
+	    {
+		    $url  = 'index.php?option=com_virtuemart&view=productdetails' ;
+		    $url .= '&virtuemart_product_id=' . $item->virtuemart_product_id ;
+		    $url .= '&virtuemart_category_id=' . $item->virtuemart_category_id ;
+		    // Добавить sef - lang - если Multilanguage ON
+		    $url .= ($this->languages ? '&lang='.$this->languages[ $this->countLanguages ]->sef: '') ;
+
+		    $item->sefUrl = JRoute::link('site', $url );
+
+			// добавить товар в коллекцию
+			$this->productsResult[] =  $item ;
+			// Добавить ссылку в коллекцию <url><loc>
+		    $this->addUrlLocTag( $item->sefUrl );
+
+		}#END FOREACH
+
+		// Создать карту для товаров
+	    $this->writeFileMap(  'products'.( $this->languages ?'-'.$this->languages[ $this->countLanguages ]->sef:'') );
+
+	    // Если Multilanguage ON - Устанавливаем замыкание метода для следующего языка
+	    if ( $this->languages && $this->countLanguages != count( $this->languages ) - 1 ){
+		    $this->changeLang();
+		    $this->getLisProducts();
+	    }
+	    return $this->productsResult ;
+
+
+		// TODO - далее не используем  - нужен тест на МАРКЕТ ПРОФИЛЬ
+
         foreach ( $productsResult as &$item)
         {
 
@@ -290,21 +372,10 @@ class Virtuemart extends BackgroundComponent
 
         return $productsResult ;
 
-        echo'<pre>';print_r( $categoryListSlug );echo'</pre>'.__FILE__.' '.__LINE__;
-        echo'<pre>';print_r( $productsResult );echo'</pre>'.__FILE__.' '.__LINE__;
-        die(__FILE__ .' '. __LINE__ );
-
-
-        // products loop
-        $q = 'SELECT 
- 
-	 
-	GROUP BY ';
 
 
 
-
-
+     
 
 
 

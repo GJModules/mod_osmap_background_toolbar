@@ -19,6 +19,32 @@ defined('_JEXEC') or die;
 // The below line is no longer used in Joomla 4
 $moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'));
 
+/**
+ * Получить версию модуля
+ */
+$xml_file = JPATH_ROOT .  '/administrator/modules/mod_osmap_background_toolbar/mod_osmap_background_toolbar.xml' ;
+$dom = new DOMDocument("1.0", "utf-8");
+$dom->load($xml_file);
+$__v =   $dom->getElementsByTagName('version')->item(0)->textContent;
+
+
+
+// Get the active languages for multi-language sites
+$languages = null;
+$languagesSef = [];
+if (Joomla\CMS\Language\Multilanguage::isEnabled()) {
+	$languages = \Joomla\CMS\Language\LanguageHelper::getLanguages();
+
+	foreach ( $languages as $language)
+	{
+		$languagesSef[] = $language->sef ;
+	}#END FOREACH
+}
+
+
+
+
+
 
 
 
@@ -63,23 +89,27 @@ $osmapParams = ComponentHelper::getParams('com_osmap');
 
 
 
+
 $doc = \Joomla\CMS\Factory::getDocument();
 $opt = [
     // Медиа версия
-    '__v' => '1.3',
+    '__v' => $__v ,
     // Режим разработки
     'development_on' => false,
     // URL - Сайта
     'URL' => JURI::root(),
 //    'dataType' => 'html' ,
     'plugins' => $plugins,
+    'languagesSef' => $languagesSef,
     // Максимальное количество ошибок для Ajax запроса
     'maxAjaxErr' => $osmapParams->get('max_ajax_err' , 5 ),
 	'modOsmapBackgroundToolbar_params' => $params->toArray() ,
 
 ];
 $doc->addScriptOptions('mod_osmap_background_tool', $opt);
-Js::addJproLoad(\Joomla\CMS\Uri\Uri::root() . '/administrator/modules/mod_osmap_background_toolbar/assets/js/mod_osmap_background_toolbar.js', false, false);
+Js::addJproLoad(
+	\Joomla\CMS\Uri\Uri::root()
+	. '/administrator/modules/mod_osmap_background_toolbar/assets/js/mod_osmap_background_toolbar.js?'.$__v, false, false);
 
 
 require ModuleHelper::getLayoutPath('mod_osmap_background_toolbar', $params->get('layout', 'default'));

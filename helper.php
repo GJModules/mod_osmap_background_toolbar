@@ -85,11 +85,12 @@ class ModOsmapBackgroundToolbarHelper extends BackgroundComponent
 
     }
 
-    /**
-     * Получить список вссех продуктов
-     * @return void
-     * @since 3.9
-     */
+	/**
+	 * Создать файл для всех продуктов VM  (Получить список всех продуктов)
+	 * @return void
+	 * @throws Exception
+	 * @since 3.9
+	 */
     public static function getProductsLinkListAjax(){
         $helperVirtuemart = new  \OsmapBackgroundHelper\Virtuemart();
         $listProduct = $helperVirtuemart->getLisProducts() ;
