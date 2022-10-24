@@ -126,12 +126,12 @@ class mod_osmap_background_toolbarInstallerScript
 	 *                           - * install
 	 *                           - * update
 	 *                           - * discover_install
-	 * @param   stdClass  $parent  - Parent object calling object.
+	 * @param   Joomla\CMS\Installer\Adapter\ModuleAdapter  $parent  - Parent object calling object.
 	 *
 	 * @return void
 	 * @since 3.9
 	 */
-	function postflight(string $type, stdClass $parent)
+	function postflight(string $type, ModuleAdapter  $parent)
 	{
 //		die(__FILE__ .' '. __LINE__ );
 
