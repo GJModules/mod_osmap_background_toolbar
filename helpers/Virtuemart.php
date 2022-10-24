@@ -170,7 +170,7 @@ class Virtuemart extends BackgroundComponent
         $Query->select($selectArr);
         $Query->from( $this->db->quoteName( '#__virtuemart_categories' , 'vmCat' ));
         $Query->leftJoin(
-            $this->db->quoteName( '#__virtuemart_categories_' . $this->language  , 'vmCatLang' )
+            $this->db->quoteName( '#__virtuemart_categories_' . (!$this->language?VMLANG:$this->language)  , 'vmCatLang' )
             .'ON vmCat.virtuemart_category_id = vmCatLang.virtuemart_category_id'
         );
 
@@ -192,7 +192,11 @@ class Virtuemart extends BackgroundComponent
             ;
 
 	        $sefUrl = JRoute::link('site', $url );
-			// Добавить ссылку в коллекцию <url><loc>
+
+			// TODO -- Добавить в настройки - установка завершающего слэша в ссылках на категорию
+	        //  $item->sefUrl .= '/' ;
+
+	        // Добавить ссылку в коллекцию <url><loc>
 	        $this->addUrlLocTag( $sefUrl );
 
 	        $sefUrl = preg_replace('#^\/#' , '' , $sefUrl );
@@ -303,7 +307,6 @@ class Virtuemart extends BackgroundComponent
         $app = \Joomla\CMS\Factory::getApplication();
         $categoryListSlug = $app->input->get('categoryListSlug' , [], 'ARRAY');
 
-
         $Query = $this->db->getQuery(true);
         $selectArr = [
             $this->db->quoteName('p.modified_on'),
@@ -319,7 +322,8 @@ class Virtuemart extends BackgroundComponent
 			$this->db->quoteName( '#__virtuemart_product_categories' , 'pc' )
             . ' ON pc.virtuemart_category_id = c.virtuemart_category_id ');
         $Query->leftJoin(
-			'`#__virtuemart_products_' . VMLANG . '` as pl on pl.virtuemart_product_id = pc.virtuemart_product_id');
+			'`#__virtuemart_products_' . VMLANG . '` as pl on pl.virtuemart_product_id = pc.virtuemart_product_id'
+        );
         $Query->leftJoin( '`#__virtuemart_products` as p on p.virtuemart_product_id = pc.virtuemart_product_id');
         $whereArr = [
             'p.published = 1',
@@ -338,14 +342,33 @@ class Virtuemart extends BackgroundComponent
 		    $url .= '&virtuemart_product_id=' . $item->virtuemart_product_id ;
 		    $url .= '&virtuemart_category_id=' . $item->virtuemart_category_id ;
 		    // Добавить sef - lang - если Multilanguage ON
-		    $url .= ($this->languages ? '&lang='.$this->languages[ $this->countLanguages ]->sef: '') ;
+		    if ( $this->languages  )
+		    {
+			    $url .=  '&lang='. $this->languages[ $this->countLanguages ]->sef;
+		    }#END IF
+		     
 
-		    $item->sefUrl = JRoute::link('site', $url );
+		    $item->sefUrl = JRoute::link('site', $url , true,JRoute::TLS_IGNORE, true );
+
+			// TODO - Разобраться с правильным построением ссылки на товар
+		    if (strpos( $item->sefUrl ,  'component'))
+		    {
+//				$SefUrl = $categoryListSlug[$item->virtuemart_category_id] . '/' .$item->slug ;
+				$SefUrl = $categoryListSlug[$item->virtuemart_category_id]  . $item->slug ;
+ 			    $item->sefUrl = $SefUrl;
+		    }#END IF
+
+		    // TODO -- Добавить в настройки - установка завершающего слэша в ссылках на товар
+		    $item->sefUrl .= '/' ;
+
+
+
+
 
 			// добавить товар в коллекцию
 			$this->productsResult[] =  $item ;
 			// Добавить ссылку в коллекцию <url><loc>
-		    $this->addUrlLocTag( $item->sefUrl );
+		    $this->addUrlLocTag( $item->sefUrl , false );
 
 		}#END FOREACH
 

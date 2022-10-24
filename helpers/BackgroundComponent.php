@@ -5,6 +5,7 @@ namespace OsmapBackgroundHelper;
 use Joomla\CMS\Filesystem\File as JFile;
 use Joomla\CMS\Language\LanguageHelper;
 use Joomla\CMS\Language\Multilanguage;
+use JUri;
 
 class BackgroundComponent
 {
@@ -90,7 +91,7 @@ class BackgroundComponent
 		    $this->addFileSitemapLoc($file);
 	    }
 	    $fileMapRoot    = $this->writeFileRootMap();
-	    $fileMapRootURL = \JUri::root() . $fileMapRoot;
+	    $fileMapRootURL = JUri::root() . $fileMapRoot;
 
 
 	    $app->enqueueMessage('Основной файл карты сайта создан.');
@@ -123,7 +124,7 @@ class BackgroundComponent
 	 */
 	protected function addFileSitemapLoc( $url ){
 		$url = preg_replace('/^\//' , '' , $url );
-		$link = \JUri::root().$url ;
+		$link = JUri::root().$url ;
 		$this->urlLocTag .= '<sitemap>';
 		$this->urlLocTag .=     '<loc>'.$link.'</loc>';
 		$this->urlLocTag .= '</sitemap>';
@@ -184,14 +185,22 @@ class BackgroundComponent
 	}
 
 	/**
-     * Добавить ссылку в коллекцию
-     * @param $url
-     * @return void
-     * @since 3.9
-     */
-    protected function addUrlLocTag( $url ){
-	    $url = preg_replace('/^\//' , '' , $url );
-        $link = \JUri::root().$url ;
+	 * Добавить ссылку в коллекцию
+	 *
+	 * @param         $url     - ссылка для добавления в <url><loc>
+	 * @param   bool  $addRut  - если TRUE - Добавить домен сайта
+	 *
+	 * @return void
+	 * @since 3.9
+	 */
+    protected function addUrlLocTag($url , bool $addRut = true ){
+
+	    $link = preg_replace('/^\//' , '' , $url );
+
+		if ( $addRut ) $link = JUri::root().$link ; #END IF
+
+
+
         $this->urlLocTag .= '<url>';
         $this->urlLocTag .=     '<loc>'.$link.'</loc>';
         $this->urlLocTag .= '</url>';
