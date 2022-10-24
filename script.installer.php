@@ -135,7 +135,7 @@ class mod_osmap_background_toolbarInstallerScript
 	{
 //		die(__FILE__ .' '. __LINE__ );
 
-		$this->createModule();
+		$this->createModule( $parent );
 
 		echo '<p>' . JText::_('COM_HELLOWORLD_POSTFLIGHT_' . $type . '_TEXT') . '</p>';
 	}
