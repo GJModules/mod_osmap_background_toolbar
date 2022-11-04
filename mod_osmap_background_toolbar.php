@@ -52,13 +52,20 @@ if (Joomla\CMS\Language\Multilanguage::isEnabled()) {
 
 try
 {
-    JLoader::registerNamespace('GNZ11', JPATH_LIBRARIES . '/GNZ11', $reset = false, $prepend = false, $type = 'psr4');
+	$patchGnz11 = JPATH_LIBRARIES . '/GNZ11' ;
+    JLoader::registerNamespace('GNZ11', $patchGnz11 , $reset = false, $prepend = false, $type = 'psr4');
     $GNZ11_js = Js::instance();
 } catch (Exception $e)
 {
-    if (!\Joomla\CMS\Filesystem\Folder::exists($this->patchGnz11) && $this->app->isClient('administrator'))
+
+
+	$app = \Joomla\CMS\Factory::getApplication();
+
+
+    if (!\Joomla\CMS\Filesystem\Folder::exists( $patchGnz11 ) && $app->isClient('administrator'))
     {
-        $this->app->enqueueMessage('The GNZ11 library must be installed', 'error');
+        $app->enqueueMessage('The GNZ11 library must be installed', 'error');
+		return ;
     }#END IF
 }
 require_once JPATH_ADMINISTRATOR . '/components/com_osmap/include.php';

@@ -23,12 +23,12 @@
  */
 
 
-use Joomla\CMS\Installer\Adapter\ModuleAdapter;
+
 
 defined('_JEXEC') or die();
 
-
-
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Installer\Adapter\ModuleAdapter;
 
 
 class mod_osmap_background_toolbarInstallerScript
@@ -85,11 +85,8 @@ class mod_osmap_background_toolbarInstallerScript
 	 */
 	public function update( Joomla\CMS\Installer\Adapter\ModuleAdapter $parent)
 	{
-		echo '<p>' . JText::sprintf('COM_HELLOWORLD_UPDATE_TEXT', $parent->get('manifest')->version ) . '</p>';
-
-
-		$this->createModule( $parent );
-
+		// Обновление до версии - ( %s )
+		echo '<p>' . Text::sprintf('MOD_OSMAP_BACKGROUND_TOOLBAR_UPDATE', (string)$parent->get('manifest')->version ) . '</p>';
 	}
 
 	/**
@@ -110,7 +107,14 @@ class mod_osmap_background_toolbarInstallerScript
 	 */
 	public function preflight(string $type, ModuleAdapter $parent)
 	{
-		echo '<p>' . JText::_('MODULE_' . $type . '_TEXT') . '</p>';
+
+//		$language = JFactory::getLanguage();
+//		echo'<pre>';print_r( $language );echo'</pre>'.__FILE__.' '.__LINE__;
+
+		// Старт обновления
+		echo '<p>' . JText::_('MOD_OSMAP_BACKGROUND_TOOLBAR_PREFLIGHT_' . mb_strtoupper($type) ) . '</p>';
+//		die(__FILE__ .' '. __LINE__ );
+
 //		echo'<pre>';print_r( $parent );echo'</pre>'.__FILE__.' '.__LINE__;
 		
 //		die(__FILE__ .' '. __LINE__ );
@@ -133,11 +137,10 @@ class mod_osmap_background_toolbarInstallerScript
 	 */
 	function postflight(string $type, ModuleAdapter  $parent)
 	{
-//		die(__FILE__ .' '. __LINE__ );
 
 		$this->createModule( $parent );
-
-		echo '<p>' . JText::_('COM_HELLOWORLD_POSTFLIGHT_' . $type . '_TEXT') . '</p>';
+		// Обновление успешно завершено
+		echo '<p>' . JText::_('MOD_OSMAP_BACKGROUND_TOOLBAR_POSTFLIGHT_' . mb_strtoupper($type) ) . '</p>';
 	}
 
 	/**
