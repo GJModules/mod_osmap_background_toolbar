@@ -122,9 +122,6 @@ window.mod_osmap_background_com_filter = function () {
                     window.Mod_jshopping_slider_module.onEventMapGo()
 
                 }
-
-
-
             })
         })
     }

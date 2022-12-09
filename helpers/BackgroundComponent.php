@@ -2,9 +2,11 @@
 
 namespace OsmapBackgroundHelper;
 
+use Exception;
 use Joomla\CMS\Filesystem\File as JFile;
 use Joomla\CMS\Language\LanguageHelper;
 use Joomla\CMS\Language\Multilanguage;
+use Joomla\CMS\Language\Text;
 use JUri;
 
 class BackgroundComponent
@@ -36,6 +38,11 @@ class BackgroundComponent
 	 */
 	protected $urlLocTag = '' ;
 	/**
+	 * @var int Счетчик тегов <url><loc>....<loc><url>
+	 * @since 3.9
+	 */
+	protected $urlLocCount = 0 ;
+	/**
 	 * Подпись для основного файла карты сайта
 	 * @var string
 	 * @since version
@@ -48,7 +55,11 @@ class BackgroundComponent
 	 * @since version
 	 */
 	protected $db;
-
+	/**
+	 * @var string - Путь для сохранения файлов карты сайта
+	 * @since 3.9
+	 */
+	protected $fileMapPath ;
 	public function __construct()
 	{
 		$app          = \Joomla\CMS\Factory::getApplication();
@@ -61,61 +72,104 @@ class BackgroundComponent
 			$this->language = str_replace( '-' , '_' ,  $this->language ) ;
 		}
 		$this->db = \JFactory::getDbo();
+		// Устанавливаем директорию для сохранения
+		$this->fileMapPath = $_SERVER['DOCUMENT_ROOT'];
 	}
 
+	/**
+	 * Сбросить данные BackgroundComponent
+	 * @return void -
+	 * @since 3.9
+	 */
+	public function _reset(){
+		$this->urlLocTag = '' ;
+		$this->urlLocCount = 0 ;
+	}
 
 	/**
-	 * Создать основной файл карты сайта
+	 * Удаление файла /sitemap-com_* карты сайта
+	 *
+	 * @param   string  $name  Имя файла etc/ sitemap-com_filter_city-city-generator-custom-id-12.xml
+	 * @param   bool    $updateMap
+	 *
+	 * @return bool|array
+	 * @throws Exception
+	 * @since 3.9
+	 */
+	protected function removeSiteMapComponent( string $name , bool $updateMap = false  )
+	{
+		$app = \Joomla\CMS\Factory::getApplication();
+
+		$filePath = $this->fileMapPath.'/'.$name;
+		JFile::delete($filePath);
+		$app->enqueueMessage('Файл '. $name . ' удален.' );
+		if ( $updateMap )
+		{
+			$resultData = $this->createFileAllMapXml();
+			$this->_reset();
+			return $resultData;
+		}#END IF
+		return true;
+	}
+
+	/**
+	 * Создать основной файл карты сайта sitemap-root.xml
 	 * @return string[]
-	 * @throws \Exception
+	 * @throws Exception
 	 * @since 3.9
 	 */
     public function createFileAllMapXml(): array
     {
 	    $app = \Joomla\CMS\Factory::getApplication();
-
-	    $filepath = $_SERVER['DOCUMENT_ROOT'];
-	    $files    = glob($filepath . '/sitemap-com_*');
-
-//		echo'<pre>';print_r( $files );echo'</pre>'.__FILE__.' '.__LINE__;
-//		die(__FILE__ .' '. __LINE__ );
-
+	    $files    = glob($this->fileMapPath . '/sitemap-com_*');
 
 	    foreach ($files as &$file)
 	    {
-		    // далее получаем последний добавленный/измененный файл
-		    $LastModified[] = filemtime($file); // массив файлов со временем изменения файла
-
-		    $file = str_replace($filepath, '', $file); // массив всех файлов
-
+		    // получаем последний добавленный/измененный файл
+		    $LastModified[$file] = filemtime($file); // массив файлов со временем изменения файла
+		    $file = str_replace($this->fileMapPath, '', $file); // массив всех файлов
 		    $this->addFileSitemapLoc($file);
 	    }
 	    $fileMapRoot    = $this->writeFileRootMap();
+
 	    $fileMapRootURL = JUri::root() . $fileMapRoot;
+		$UrlLink = '<a target="_blank" href="' . $fileMapRootURL . '">Перейти</a>' ;
+	    $app->enqueueMessage('Основной файл карты сайта <b>'.$fileMapRootURL.'</b> создан. '. $UrlLink );
 
+		$dataReselt = [
+			'fileMapRootURL' => $fileMapRootURL,
+			'LastModified' => $this->_getLastModifiedSiteMapFiles(),
 
-	    $app->enqueueMessage('Основной файл карты сайта создан.');
+		];
 
-
-	    return [
-		    'fileMapRootURL' => $fileMapRootURL,
-	    ];
-
-
-// Сортируем массив с файлами по дате изменения
-
-//        $files = array_multisort($LastModified, SORT_NUMERIC, SORT_ASC, $FileName);
-//        $lastIndex = count($LastModified) - 1;
-//
-// И вот он наш последний добавленный или измененный файл
-
-//        $LastModifiedFile = $FileName[$lastIndex];
-
-
+	    return $dataReselt ;
     }
 
 	/**
-	 * Добавление ссылок  на файлы карт компонентов
+	 * Получить данные о последней модификации файлов "/sitemap-com_*"
+	 * @return array
+	 * @since 3.9
+	 */
+	protected function _getLastModifiedSiteMapFiles():array
+	{
+		$LastModified = [] ;
+
+		$files    = glob($this->fileMapPath . '/sitemap-com_*');
+		foreach ($files as &$file)
+		{
+			$xmlFile = pathinfo( $file );
+			$filename =  $xmlFile['basename'] ;
+			$jdate = new \JDate(filemtime($file));
+			$pretty_date = $jdate->format(Text::_('DATE_FORMAT_LC2'));
+
+			// получаем последний добавленный/измененный файл
+			$LastModified[$filename] = $pretty_date; // массив файлов со временем изменения файла
+		}
+		return $LastModified ;
+	}
+
+	/**
+	 * Добавление ссылок  на файлы карт компонентов для файла sitemap-root.xml
 	 * ect/ (sitemap-com_content-1.xml , sitemap-com_virtuemart-category-1.xml)
 	 *
 	 * @param $url
@@ -131,12 +185,12 @@ class BackgroundComponent
 	}
 
 	/**
-	 * Создать основной файл карты сайта
-	 * @return string
+	 * Создать основной файл карты сайта со ссылками на подчиненные файлы
+	 * @return string - имя файла
 	 *
 	 * @since version
 	 */
-	protected function writeFileRootMap(   ): string
+	protected function writeFileRootMap(): string
 	{
 		$mapContent = '<?xml version="1.0" encoding="UTF-8"?>';
 		$mapContent .= '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
@@ -147,22 +201,26 @@ class BackgroundComponent
 
 	/**
 	 * Записать ссылки в XML файл
-	 * @param           $context
-	 * @param           $indexFile
-	 * @param   string  $mapContent
+	 *
+	 * @param                $context
+	 * @param   int|bool     $indexFile
+	 * @param   string|bool  $mapContent
 	 *
 	 * @return string
 	 *
 	 * @since version
 	 */
-	public function writeFile( $context, $indexFile, string $mapContent): string
+	public function writeFile( $context, $indexFile = false  , $mapContent = false ): string
 	{
+
 		if ( $indexFile )
 		{
 			$fileMapName = 'sitemap-' . $this->component . '-' . $context . '-' . $indexFile . '.xml';
 		}else{
 			$fileMapName = 'sitemap-' . $context . '.xml' ;
 		}#END IF
+
+		if ( !$mapContent ) $mapContent = $this->urlLocTag ;  #END IF
 
 		$pathFile    = JPATH_SITE . '/' . $fileMapName;
 		try
@@ -173,65 +231,67 @@ class BackgroundComponent
 			return $fileMapName;
 			// throw new \Exception('Code Exception '.__FILE__.':'.__LINE__) ;
 		}
-		catch (\Exception $e)
+		catch ( Exception $e)
 		{
 			// Executed only in PHP 5, will not be reached in PHP 7
 			echo 'Выброшено исключение: ', $e->getMessage(), "\n";
-			echo '<pre>';
-			print_r($e);
-			echo '</pre>' . __FILE__ . ' ' . __LINE__;
+			echo '<pre>'; print_r($e); echo '</pre>' . __FILE__ . ' ' . __LINE__;
 			die(__FILE__ . ' ' . __LINE__);
 		}
 	}
 
+
 	/**
-	 * Добавить ссылку в коллекцию
+	 * Добавить ссылку в коллекцию для файла /sitemap-com_*
 	 *
 	 * @param         $url     - ссылка для добавления в <url><loc>
-	 * @param   bool  $addRut  - если TRUE - Добавить домен сайта
+	 * @param   bool  $addRoot  - если TRUE - Добавить домен сайта
 	 *
 	 * @return void
 	 * @since 3.9
 	 */
-    protected function addUrlLocTag($url , bool $addRut = true ){
+    public function addUrlLocTag($url , bool $addRoot = true ){
 
 	    $link = preg_replace('/^\//' , '' , $url );
-
-		if ( $addRut ) $link = JUri::root().$link ; #END IF
-
-
+		if ( $addRoot ) $link = JUri::root().$link ; #END IF
 
         $this->urlLocTag .= '<url>';
         $this->urlLocTag .=     '<loc>'.$link.'</loc>';
         $this->urlLocTag .= '</url>';
+		$this->urlLocCount ++ ;
     }
 
 	/**
 	 * Запись в файл sitemap-com_...-{$context}-{$indexFile}.xml
 	 *
 	 * @param   bool|string  $context
+	 * @param   bool|int         $indexFile
 	 *
-	 * @return void
-	 * @throws \Exception
+	 * @return string - Имя созданного файла XML
+	 * @throws Exception
 	 * @since 3.9
 	 */
-    protected function writeFileMap( $context = false  ){
+    protected function writeFileMap( $context = false , $indexFile = false  ):string
+    {
 		try
 		{
-			if ( !$context ) throw new \Exception(' Переменная $context - пуста '.__FILE__.':'.__LINE__) ; #END IF
+			if ( !$context ) throw new Exception(' Переменная $context - пуста '.__FILE__.':'.__LINE__) ; #END IF
 
 		}
-		catch (\Exception $e)
+		catch ( Exception $e)
 		{
 		    // Executed only in PHP 5, will not be reached in PHP 7
 		    echo 'Выброшено исключение: ',  $e->getMessage(), "\n";
 		    echo'<pre>';print_r( $e );echo'</pre>'.__FILE__.' '.__LINE__;
 		    die(__FILE__ .' '. __LINE__ );
 		}
+	    if ( !$indexFile )
+	    {
+		    $app = \Joomla\CMS\Factory::getApplication();
+		    // Номер файла
+		    $indexFile = $app->input->get('indexFile' , 1 , 'INT');
+	    }#END IF
 
-		$app = \Joomla\CMS\Factory::getApplication();
-		// Номер файла
-	    $indexFile = $app->input->get('indexFile' , 1 , 'INT');
 
 		$mapContent = '<?xml version="1.0" encoding="UTF-8"?>';
         $mapContent .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';

@@ -112,7 +112,7 @@ window.mod_osmap_background_tool = function () {
         if ( self._params.plugins.length === self.counterPlugins ){
             self.createFileAllMapXml().then(function (r){
                 return;
-            },function (err){console.log(err)});;
+            },function (err){console.log(err)});
             return;
         }
         console.log( 'mod_osmap_background_toolbar' , this._params );
@@ -142,9 +142,6 @@ window.mod_osmap_background_tool = function () {
 
         if ( pluginObj.element !== 'com_menu' ) {
             Data.component =  pluginObj.element;
-            if ( Data.component === 'joomla' )  {
-
-            }
             urlParamQuery = '?component='+Data.component
 
         }

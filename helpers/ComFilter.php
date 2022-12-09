@@ -30,13 +30,10 @@ class ComFilter extends BackgroundComponent
         $indexFile = $app->input->get('indexFile' , 0, 'INT');
 		$limit_links = $this->params['modOsmapBackgroundToolbar_params']['limit_links'];
 
-
-        
 		/** @var JDatabaseQueryMysqli $Query */
         $Query = $this->db->getQuery(true);
         $select = [
             $this->db->quoteName('sef_url'),
-
         ];
         $Query->select( $select );
         $Query->from( $this->db->quoteName('#__cf_customfields_setting_seo'))

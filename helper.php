@@ -52,11 +52,13 @@ class ModOsmapBackgroundToolbarHelper extends BackgroundComponent
         echo new JResponseJson( $returnData , 'Товары добавлены в карту сайта' , false );
         die();
     }
-    /**
-     * Создать файл sitemap-com_virtuemart-category-{1}.xml
-     * @return void
-     * @since 3.9
-     */
+
+	/**
+	 * Создать файл sitemap-com_virtuemart-category-{1}.xml
+	 * @return void
+	 * @throws Exception
+	 * @since 3.9
+	 */
     public static function onCreateMapXmlCategoryAjax(){
         $helperVirtuemart = new  \OsmapBackgroundHelper\Virtuemart();
         $returnData = [
@@ -68,11 +70,12 @@ class ModOsmapBackgroundToolbarHelper extends BackgroundComponent
         die();
     }
 
-    /**
-     * Получить список всех категорий
-     * @return void
-     * @since 3.9
-     */
+	/**
+	 * Получить список всех категорий
+	 * @return void
+	 * @throws Exception
+	 * @since 3.9
+	 */
     public static function getCategoryIdListAjax(){
         $helperVirtuemart = new  \OsmapBackgroundHelper\Virtuemart();
         $returnData = [
@@ -86,7 +89,7 @@ class ModOsmapBackgroundToolbarHelper extends BackgroundComponent
     }
 
 	/**
-	 * Создать файл для всех продуктов VM  (Получить список всех продуктов)
+	 * Создать файл для всех продуктов VM (Получить список всех продуктов)
 	 * @return void
 	 * @throws Exception
 	 * @since 3.9

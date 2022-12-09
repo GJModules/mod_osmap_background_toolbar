@@ -34,7 +34,10 @@ use Joomla\CMS\Installer\Adapter\ModuleAdapter;
 class mod_osmap_background_toolbarInstallerScript
 {
 	/**
-	 * Отметить для отмены установки / Flag to cancel the installation
+	 * Отметить для отмены установки
+	 * ---
+	 * Flag to cancel the installation
+	 * ---
 	 *
 	 * @var bool
 	 * @since 3.9
@@ -43,7 +46,9 @@ class mod_osmap_background_toolbarInstallerScript
 
 	/**
 	 * Этот метод вызывается после установки компонента.
+	 * ---
 	 * This method is called after a component is installed.
+	 * ---
 	 *
 	 * @param   stdClass  $parent  - Parent object calling this method.
 	 *
@@ -60,7 +65,9 @@ class mod_osmap_background_toolbarInstallerScript
 
 	/**
 	 * Этот метод вызывается после удаления компонента.
+	 * ---
 	 * This method is called after a component is uninstalled.
+	 * ---
 	 *
 	 * @param   stdClass  $parent  - Parent object calling this method.
 	 *
@@ -69,14 +76,14 @@ class mod_osmap_background_toolbarInstallerScript
 	 */
 	public function uninstall(stdClass $parent)
 	{
-//		die(__FILE__ .' '. __LINE__ );
-
-		echo '<p>' . JText::_('COM_HELLOWORLD_UNINSTALL_TEXT') . '</p>';
+		echo '<p>' . Text::_('COM_HELLOWORLD_UNINSTALL_TEXT') . '</p>';
 	}
 
 	/**
 	 * Этот метод вызывается после обновления компонента.
+	 * ---
 	 * This method is called after a component is updated.
+	 * ---
 	 *
 	 * @param   Joomla\CMS\Installer\Adapter\ModuleAdapter  $parent  - Parent object calling object.
 	 *
@@ -91,10 +98,12 @@ class mod_osmap_background_toolbarInstallerScript
 
 	/**
 	 * Запускается непосредственно перед выполнением каких-либо действий по установке компонента.
+	 * ---
 	 * В этой функции должны выполняться проверки и предварительные условия.
-	 *
+	 * ---
 	 * Runs just before any installation action is performed on the component.
 	 * Verifications and pre-requisites should run in this function.
+	 *
 	 *
 	 * @param   string                                      $type    - Type of PreFlight action. Possible values are:
 	 *                           - * install
@@ -105,7 +114,7 @@ class mod_osmap_background_toolbarInstallerScript
 	 * @return void
 	 * @since 3.9
 	 */
-	public function preflight(string $type, ModuleAdapter $parent)
+	public function preflight(string $type,  $parent)
 	{
 
 //		$language = JFactory::getLanguage();
@@ -124,7 +133,9 @@ class mod_osmap_background_toolbarInstallerScript
 
 	/**
 	 * Запускается сразу после выполнения любого действия по установке компонента.
+	 * ---
 	 * Runs right after any installation action is performed on the component.
+	 * ---
 	 *
 	 * @param   string    $type    - Type of PostFlight action. Possible values are:
 	 *                           - * install
@@ -135,7 +146,7 @@ class mod_osmap_background_toolbarInstallerScript
 	 * @return void
 	 * @since 3.9
 	 */
-	function postflight(string $type, ModuleAdapter  $parent)
+	public function postflight(string $type, ModuleAdapter  $parent)
 	{
 
 		$this->createModule( $parent );
@@ -147,6 +158,7 @@ class mod_osmap_background_toolbarInstallerScript
 	 * @param $parent
 	 *
 	 * @return void
+	 * @since 3.9
 	 */
 	protected function createModule( $parent ){
 		$db = JFactory::getDBO();
