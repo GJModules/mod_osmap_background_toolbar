@@ -19,6 +19,7 @@ namespace OsmapBackgroundHelper;
 use CustomfiltersTableSetting_city;
 use Exception;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Multilanguage;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Registry\Registry;
@@ -100,7 +101,7 @@ class ComFilterCity extends BackgroundComponent
 	}
 	/**
 	 * Создать файл карты сайта для одного фильтра cityFilter
-	 *
+	 * ---
 	 * @param   int  $idFilterCity  ID FilterCity - для которого создавать карту
 	 *
 	 * @return array - данные статистики
@@ -112,25 +113,54 @@ class ComFilterCity extends BackgroundComponent
 		/**
 		 * @var CustomfiltersTableSetting_city
 		 */
-		$table = $this->SettingCityModel->addToCartFilter($idFilterCity);
+		$table = $this->SettingCityModel->loadTableCityFilter($idFilterCity);
+//		$table = $this->SettingCityModel->addToCartFilter($idFilterCity);
+
 		$this->slug_filter = $table->slug_filter ;
-
-		 
-
 
 		$Registry = new Registry();
 		$Registry->loadString( $table->params ) ;
 		$paramsArea = $Registry->toArray();
-        
+
+		$languagesTag = '*';
+		/**
+		 * Если Multilang isEnabled отбираем поля по языкам
+		 */
+		if ( Multilanguage::isEnabled() )
+		{
+			// Получить все установленные языки
+//			$languages = \Joomla\CMS\Language\LanguageHelper::getKnownLanguages(  );
+			// Получить все опубликованные языки
+			$languages = \Joomla\CMS\Language\LanguageHelper::getLanguages();
+
+			foreach ( $languages as $language )
+			{
+				if ( $language->sef == $table->known_languages )
+				{
+					$languagesTag = $language->sef ;
+				}#END IF
+			}#END FOREACH
+		}
+
 		// Создать Sef ссылку для категорий VM выбранных в CityFilter etc/ /filtr/metallocherepitsa/
 		foreach ( $table->vm_categories_id as $i => $item)
 		{
-			$this->vmSefCategory[] = \seoTools_uri::getLinkFilterCategory($item);
+			$this->vmSefCategory[] = \seoTools_uri::getLinkFilterCategory($item , $languagesTag );
 		}#END FOREACH
 
 		$this->getOnArea( $paramsArea['use_city_setting'] ) ;
 
+//		echo'<pre>';print_r( $languagesTag );echo'</pre>'.__FILE__.' '.__LINE__;
+//		echo'<pre>';print_r( $this->vmSefCategory );echo'</pre>'.__FILE__.' '.__LINE__;
+//		echo'<pre>';print_r( $languages );echo'</pre>'.__FILE__.' '.__LINE__;
+//		echo'<pre>';print_r( $table );echo'</pre>'.__FILE__.' '.__LINE__;
+//		die(__FILE__ .' '. __LINE__ );
+
+
+
+
 		$arrRegions = $this->getChildren( $this->findRegions );
+
 
 
 		$fileMapName = $this->component . '-' . $this->slug_filter .'-id-' . $this->idFilterCity ;
@@ -169,6 +199,8 @@ class ComFilterCity extends BackgroundComponent
 	 */
 	protected function addToMapFilterAreaCustoms( $params_customs ):array
 	{
+
+
 		// Сбрасываем количество ссылок <url><loc>....<loc><url>
 		$this->urlLocCount = 0 ;
 		// меняем имя фильтра для custom параметров
@@ -196,6 +228,10 @@ class ComFilterCity extends BackgroundComponent
 	 */
 	protected function addToMapFilterArea($arrArea):array
 	{
+		echo'<pre>';print_r( $this->vmSefCategory );echo'</pre>'.__FILE__.' '.__LINE__;
+		echo'<pre>';print_r( $arrArea );echo'</pre>'.__FILE__.' '.__LINE__;
+//		die(__FILE__ .' '. __LINE__ );
+
 		// Крутим SEF ссылки на категории VM
 		foreach (  $this->vmSefCategory as $vmSefCategoryItem )
 		{
@@ -241,6 +277,12 @@ class ComFilterCity extends BackgroundComponent
 	 */
 	protected function addLinkCollect( $localUrl ){
 		$uri = new \Joomla\Uri\Uri( $localUrl );
+
+		echo'<pre>';print_r( $localUrl );echo'</pre>'.__FILE__.' '.__LINE__;
+		echo'<pre>';print_r( $uri );echo'</pre>'.__FILE__.' '.__LINE__;
+//		die(__FILE__ .' '. __LINE__ );
+
+
 		$jRoot = preg_replace( '/\/$/' , '' , \JUri::root() );
 		$uri->setHost( $jRoot );
 		$url = $uri->toString() ;
