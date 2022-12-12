@@ -92,11 +92,6 @@ $plugins[] = $com_filter ;
 
 $osmapParams = ComponentHelper::getParams('com_osmap');
 
-
-
-
-
-
 $doc = \Joomla\CMS\Factory::getDocument();
 $opt = [
     // Медиа версия

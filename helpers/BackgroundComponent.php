@@ -121,7 +121,7 @@ class BackgroundComponent
     public function createFileAllMapXml(): array
     {
 	    $app = \Joomla\CMS\Factory::getApplication();
-	    $files    = glob($this->fileMapPath . '/sitemap-com_*');
+	    $files    = glob($this->fileMapPath . '/sitemap-com-*');
 
 	    foreach ($files as &$file)
 	    {
@@ -212,6 +212,10 @@ class BackgroundComponent
 	 */
 	public function writeFile( $context, $indexFile = false  , $mapContent = false ): string
 	{
+		// TODO - Изменить нижнее подчеркивание
+		$this->component = str_replace('_' , '-' , $this->component ) ;
+//		echo'<pre>';print_r( $this->component );echo'</pre>'.__FILE__.' '.__LINE__;
+//		die(__FILE__ .' '. __LINE__ );
 
 		if ( $indexFile )
 		{
