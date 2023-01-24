@@ -2,6 +2,8 @@
 
 use OsmapBackgroundHelper\BackgroundComponent;
 
+
+
 JLoader::registerNamespace( 'OsmapBackgroundHelper' , JPATH_ADMINISTRATOR . '/modules/mod_osmap_background_toolbar/helpers' , $reset = false , $prepend = false , $type = 'psr4' );
 
 $config = \Joomla\CMS\Factory::getConfig();
@@ -16,8 +18,11 @@ class ModOsmapBackgroundToolbarHelper extends BackgroundComponent
 	 * @since version
 	 */
     public static function createFileAllMapXmlAjax(){
+        die(__FILE__ .' '. __LINE__ );
+
         $helperBackgroundComponent = new \OsmapBackgroundHelper\BackgroundComponent();
 	    $returnData = $helperBackgroundComponent->createFileAllMapXml();
+
 
 	    echo new JResponseJson( $returnData , 'Основной файл карты сайта создан' , false );
 	    die();

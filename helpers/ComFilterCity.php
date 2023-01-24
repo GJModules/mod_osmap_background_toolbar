@@ -93,10 +93,14 @@ class ComFilterCity extends BackgroundComponent
 	 */
 	public function _removeSiteMapComponent( array &$name , bool $updateMap = false ){
 
-		parent::removeSiteMapComponent($name['fileMapName'] , $updateMap );
-		unset( $name['fileMapName'] );
-		unset( $name['LastModified'] );
-		unset( $name['urlLocCount'] );
+		if ( isset( $name['fileMapName'] ) )
+		{
+			parent::removeSiteMapComponent($name['fileMapName'] , $updateMap );
+			unset( $name['fileMapName'] );
+			unset( $name['LastModified'] );
+			unset( $name['urlLocCount'] );
+		}#END IF
+
   
 	}
 	/**
@@ -118,9 +122,15 @@ class ComFilterCity extends BackgroundComponent
 
 		$this->slug_filter = $table->slug_filter ;
 
+
+
 		$Registry = new Registry();
 		$Registry->loadString( $table->params ) ;
 		$paramsArea = $Registry->toArray();
+
+//		echo'<pre>';print_r( $paramsArea );echo'</pre>'.__FILE__.' '.__LINE__;
+//		die(__FILE__ .' '. __LINE__ );
+
 
 		$languagesTag = '*';
 		/**
@@ -128,8 +138,7 @@ class ComFilterCity extends BackgroundComponent
 		 */
 		if ( Multilanguage::isEnabled() )
 		{
-			// Получить все установленные языки
-//			$languages = \Joomla\CMS\Language\LanguageHelper::getKnownLanguages(  );
+
 			// Получить все опубликованные языки
 			$languages = \Joomla\CMS\Language\LanguageHelper::getLanguages();
 
@@ -149,21 +158,10 @@ class ComFilterCity extends BackgroundComponent
 		}#END FOREACH
 
 		$this->getOnArea( $paramsArea['use_city_setting'] ) ;
-
-//		echo'<pre>';print_r( $languagesTag );echo'</pre>'.__FILE__.' '.__LINE__;
-//		echo'<pre>';print_r( $this->vmSefCategory );echo'</pre>'.__FILE__.' '.__LINE__;
-//		echo'<pre>';print_r( $languages );echo'</pre>'.__FILE__.' '.__LINE__;
-//		echo'<pre>';print_r( $table );echo'</pre>'.__FILE__.' '.__LINE__;
-//		die(__FILE__ .' '. __LINE__ );
-
-
-
-
 		$arrRegions = $this->getChildren( $this->findRegions );
-
-
-
 		$fileMapName = $this->component . '-' . $this->slug_filter .'-id-' . $this->idFilterCity ;
+
+
 
 		$this->_removeSiteMapComponent( $table->statistic['FilterArea']  ) ;
 
@@ -174,7 +172,17 @@ class ComFilterCity extends BackgroundComponent
 			$this->_reset();
 		}#END IF
 
-		$this->_removeSiteMapComponent( $table->statistic['FilterCustoms']  ) ;
+
+
+
+		echo'<pre>';print_r( $table->statistic['FilterArea'] );echo'</pre>'.__FILE__.' '.__LINE__;
+		echo'<pre>';print_r( $fileMapName );echo'</pre>'.__FILE__.' '.__LINE__;
+		echo'<pre>';print_r( $this->vmSefCategory );echo'</pre>'.__FILE__.' '.__LINE__;
+		echo'<pre>';print_r( $this->findRegions );echo'</pre>'.__FILE__.' '.__LINE__;
+		echo'<pre>';print_r( $arrRegions );echo'</pre>'.__FILE__.' '.__LINE__;
+//		die(__FILE__ .' '. __LINE__ );
+
+//		$this->_removeSiteMapComponent( $table->statistic['FilterCustoms']  ) ;
 
 
 		// Дополнительные параметры CityFilter
@@ -325,20 +333,32 @@ class ComFilterCity extends BackgroundComponent
 			$this->db->quoteName('chc.id') .'>'.$this->db->quote(0  )
 		];
 		$Query->where( $where);
-//		echo '<br>------------<br>Query Dump :'.__FILE__ .' '.__LINE__ .$Query->dump().'------------<br>';
+		echo '<br>------------<br>Query Dump :'.__FILE__ .' '.__LINE__ .$Query->dump().'------------<br>';
 		$this->db->setQuery($Query);
 
 		$res = $this->db->loadObjectList();
+		
+//		echo'<pre>';print_r( $aliasArr );echo'</pre>'.__FILE__.' '.__LINE__;
+//		echo'<pre>';print_r( $res );echo'</pre>'.__FILE__.' '.__LINE__;
 
+		
+		
 		// убрать из включенных регионов те которые являются областями
 		foreach ( $res as $resItem)
 		{
 			if ( in_array( $resItem->pc_alias , $aliasArr ))
 			{
-				$key = array_search($resItem->pc_alias , $aliasArr );
+				$key = array_search( $resItem->pc_alias , $aliasArr );
+
 				unset( $aliasArr[$key]);
 			}#END IF
 		}#END FOREACH
+		
+
+
+
+		$resAreaNoChild = [] ;
+		if (  empty( $aliasArr ) ) return $res ; #END IF
 
 		// находим регионы у которых нет дочерних etc/ Киев
 		$Query = $this->db->getQuery( true);
@@ -350,13 +370,16 @@ class ComFilterCity extends BackgroundComponent
 		];
 		$Query->select($select )
 			->from($this->db->quoteName('#__cf_customfields_city' , 'chc'));
+
 		$_aliasArr = array_map([$this->db, 'quote'], $aliasArr );
 		$where = [
 			sprintf('chc.alias IN (%s)', join(',', $_aliasArr)) ,
 			$this->db->quoteName('chc.id') .'>'.$this->db->quote(0  )
 		];
+
 		$Query->where( $where);
 		$this->db->setQuery($Query);
+
 		$resAreaNoChild = $this->db->loadObjectList();
 		// Объединить города
 		return array_merge( $res, $resAreaNoChild);
@@ -366,6 +389,7 @@ class ComFilterCity extends BackgroundComponent
 
 	/**
 	 * Найти города во включенных регионах
+	 * ---
 	 * @param array $paramsArea Массив с настройками городов
 	 * @param bool $_use -- в замыкании - передаем использование
 	 *
@@ -375,12 +399,35 @@ class ComFilterCity extends BackgroundComponent
 	protected function getOnArea($paramsArea , $_use = false ){
 
 
+		
+
 		foreach ( $paramsArea as $keyArea => $item)
 		{
-			// Если у региона только use == 0
-			if ( key_exists('use' , $item ) && count( $item ) == 1 && $item['use'] == 0 ) continue ;  #END IF
 
-			if ( key_exists('use' , $item ) && count( $item ) == 1 && $item['use'] == 1 )
+			if ( key_exists('use' , $item ) && $item['use'] == 1   )
+			{
+				$this->findRegions[] = $keyArea ;
+			}#END IF
+			
+			unset($item['use']);
+			unset($item['default_h1_tag']);
+			unset($item['default_title']);
+			unset($item['default_description']);
+			unset($item['default_keywords']);
+
+			// Если есть вложенные регионы
+			if ( count( $item ) )
+			{
+				$this->getOnArea($item);
+			}#END IF
+
+//			echo'<pre>';print_r( $item );echo'</pre>'.__FILE__.' '.__LINE__;
+//			echo'<pre>';print_r( $item );echo'</pre>'.__FILE__.' '.__LINE__;
+
+			// Если у региона только use == 0
+//			if ( key_exists('use' , $item ) && count( $item ) == 1 && $item['use'] == 0 ) continue ;  #END IF
+
+			/*if ( key_exists('use' , $item ) && count( $item ) == 1 && $item['use'] == 1 )
 			{
 				$this->findRegions[] = $keyArea ;
 				continue ;
@@ -393,18 +440,20 @@ class ComFilterCity extends BackgroundComponent
 				}#END FOREACH
 			}#END IF
 
+
+
 			if ( !key_exists('use' , $item ) ) $item['use'] = 0 ;  #END IF
 
 			if (is_array($item))
 			{
 				$this->getOnArea($item);
-			}#END IF
+			}#END IF*/
 
 
 
 		}#END FOREACH
 
-//		echo'<pre>';print_r( $paramsArea );echo'</pre>'.__FILE__.' '.__LINE__;
+//		echo'<pre>';print_r( $this->findRegions );echo'</pre>'.__FILE__.' '.__LINE__;
 //		die(__FILE__ .' '. __LINE__ );
 
 	}

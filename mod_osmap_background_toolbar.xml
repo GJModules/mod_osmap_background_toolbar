@@ -8,8 +8,8 @@
 	<copyright>A copyright</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
 
-	<creationDate>12.12.22-18:13</creationDate>
-	<version>1.5.14</version>
+	<creationDate>24.01.23-22:54</creationDate>
+	<version>1.5.15</version>
 
 	<scriptfile>script.installer.php</scriptfile>
 
@@ -35,7 +35,7 @@
 			<fieldset name="basic">
 				<field name="limit_links"
 					type="text"
-					default="5000"
+					default="3000"
 					class="limit_links "
 					size="20"
 					readonly=""

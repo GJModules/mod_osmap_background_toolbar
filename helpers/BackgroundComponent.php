@@ -121,7 +121,7 @@ class BackgroundComponent
     public function createFileAllMapXml(): array
     {
 	    $app = \Joomla\CMS\Factory::getApplication();
-	    $files    = glob($this->fileMapPath . '/sitemap-com-*');
+	    $files    = glob($this->fileMapPath . '/sitemap-com*');
 
 	    foreach ($files as &$file)
 	    {
@@ -224,6 +224,11 @@ class BackgroundComponent
 			$fileMapName = 'sitemap-' . $context . '.xml' ;
 		}#END IF
 
+		if ( $fileMapName == 'sitemap-root.xml' )
+		{
+//			$fileMapName = 'sitemap.xml' ;
+		}#END IF
+		
 		if ( !$mapContent ) $mapContent = $this->urlLocTag ;  #END IF
 
 		$pathFile    = JPATH_SITE . '/' . $fileMapName;
